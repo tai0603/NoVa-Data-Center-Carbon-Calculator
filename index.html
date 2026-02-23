@@ -1,8 +1,366 @@
-<!DOCTYPE html>
-	<html>
-		<body>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>NoVa Data Center Carbon Calculator (Scope 1 & 2)</title>
+	<style>
+		:root{
+			--bg:#0b1220; --panel:#0f1b31; --card:#111f3a;
+			--text:#e7eefc; --muted:#a9b7d3; --line:#243556;
+			--accent:#63b3ff; --good:#46e6a7; --warn:#ffd36a;
+		}
+		*{box-sizing:border-box}
+		body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",Arial;
+			background:linear-gradient(180deg,var(--bg),#070c16); color:var(--text);}
+		header{padding:18px 20px;border-bottom:1px solid var(--line); background:rgba(15,27,49,.6); backdrop-filter: blur(8px); position:sticky; top:0}
+		h1{margin:0;font-size:18px}
+		.sub{margin-top:6px;color:var(--muted);font-size:12px}
+		.wrap{max-width:1200px;margin:0 auto;padding:18px 16px}
+		.grid{display:grid;grid-template-columns:420px 1fr; gap:14px}
+		@media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+		.panel{background:rgba(15,27,49,.75); border:1px solid var(--line); border-radius:14px; padding:14px}
+		.panel h2{margin:0 0 10px 0;font-size:14px;color:#d9e6ff}
+		.section{padding:10px 0;border-top:1px dashed rgba(36,53,86,.7)}
+		.section:first-of-type{border-top:none;padding-top:0}
+		.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+		.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+		label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px 2px}
+		input,select{
+			width:100%; padding:10px 10px; border-radius:10px; border:1px solid var(--line);
+			background:rgba(17,31,58,.9); color:var(--text); outline:none;
+		}
+		input:focus,select:focus{border-color:rgba(99,179,255,.8); box-shadow:0 0 0 3px rgba(99,179,255,.15)}
+		.hint{font-size:11px;color:var(--muted);margin-top:6px}
+		.btns{display:flex;gap:10px;margin-top:12px}
+		button{
+			border:1px solid var(--line); background:rgba(17,31,58,.9); color:var(--text);
+			padding:10px 12px;border-radius:10px; cursor:pointer; font-weight:600;
+		}
+		button.primary{border-color:rgba(99,179,255,.55); background:rgba(99,179,255,.18)}
+		button:hover{filter:brightness(1.1)}
+		.right{display:grid; grid-template-rows:auto 1fr; gap:14px}
+		.cards{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+		@media (max-width: 980px){ .cards{grid-template-columns:1fr} }
+		.card{
+			background:rgba(17,31,58,.75); border:1px solid var(--line); border-radius:14px; padding:14px;
+			display:flex; flex-direction:column; gap:8px;
+		}
+		.kpi-title{font-size:12px;color:var(--muted)}
+		.kpi-value{font-size:22px;font-weight:800; letter-spacing:.2px}
+		.kpi-sub{font-size:11px;color:var(--muted)}
+		.mini{display:flex; gap:10px; align-items:center}
+		.pill{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+		.bar{
+			height:10px;border-radius:999px;background:rgba(36,53,86,.7); overflow:hidden;border:1px solid rgba(36,53,86,.9)
+		}
+		.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--good)); width:0%}
+		.two{display:grid;grid-template-columns:1fr 1fr; gap:12px}
+		@media (max-width: 980px){ .two{grid-template-columns:1fr} }
+		table{width:100%;border-collapse:separate;border-spacing:0 8px}
+		td{padding:10px;border:1px solid var(--line);background:rgba(17,31,58,.6)}
+		td:first-child{border-radius:10px 0 0 10px;color:var(--muted);width:55%}
+		td:last-child{border-radius:0 10px 10px 0;text-align:right;font-weight:700}
+		.muted{color:var(--muted)}
+	</style>
+</head>
+<body>
+<header>
+	<h1>NoVa Data Center Carbon Emission Calculator</h1>
+</header>
 
-			<h1>This is a Test.</h1>
+<div class="wrap">
+	<div class="grid">
+		<!-- LEFT: INPUTS -->
+		<div class="panel">
+			<h2>Inputs</h2>
 
-		</body>
+			<div class="section">
+				<div class="row">
+					<div>
+						<label>Location</label>
+						<select id="location">
+							<option value="NoVa">Northern Virginia (NoVa)</option>
+							<option value="Other">Other (manual EF)</option>
+						</select>
+					</div>
+					<div>
+						<label>Grid EF (kgCO₂e/MWh)</label>
+						<input id="gridEF" type="number" step="0.1" value="269" />
+					</div>
+				</div>
+			</div>
+
+			<!-- Scope 1 per doc -->
+			<div class="section">
+				<h2 style="margin:0 0 8px 0;">Scope 1（On-site Emissions）</h2>
+				<div class="row">
+					<div>
+						<label>Annual Diesel (gallons)</label>
+						<input id="dieselGal" type="number" step="1" value="5000" />
+						<div class="hint">Diesel emissions = gallons × 10.21 kg CO₂/gallon</div>
+					</div>
+					<div>
+						<label>Annual Natural Gas (therms)</label>
+						<input id="gasTherms" type="number" step="1" value="0" />
+						<div class="hint">Gas emissions = therms × 5.3 kg CO₂/therm</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div>
+						<label>Total Refrigerant Charge (kg)</label>
+						<input id="refrigCharge" type="number" step="0.1" value="0" />
+					</div>
+					<div>
+						<label>Annual Leakage Rate (%)</label>
+						<input id="leakRate" type="number" step="0.1" value="0" min="0" max="100" />
+					</div>
+				</div>
+
+				<div class="row">
+					<div>
+						<label>Refrigerant Type (for GWP)</label>
+						<select id="refrigType">
+							<option value="R410A">R-410A (GWP 2,088)</option>
+							<option value="R134a">R-134a (GWP 1,430)</option>
+							<option value="R407C">R-407C (GWP 1,774)</option>
+							<option value="R32">R-32 (GWP 675)</option>
+							<option value="R22">R-22 (legacy) (GWP 1,810)</option>
+							<option value="R744">R-744 (GWP 1)</option>
+							<option value="R717">R-717 (GWP 0)</option>
+						</select>
+					</div>
+					<div>
+						<label>Equipment Type（Optional）</label>
+						<select id="equipType">
+							<option value="CRAC/CRAH">CRAC/CRAH</option>
+							<option value="Chiller">Chiller</option>
+							<option value="Other">Other</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="hint muted">Refrigerant Emissions = Charge(kg) × LeakRate(%) × GWP（kg CO₂e）</div>
+			</div>
+
+			<!-- Optional normalization fields (keep as-is) -->
+			<div class="section">
+				<div class="row3">
+					<div>
+						<label># Racks（Optional）</label>
+						<input id="racks" type="number" step="1" placeholder="optional" />
+					</div>
+					<div>
+						<label>Sqft（Optional）</label>
+						<input id="sqft" type="number" step="1" placeholder="optional" />
+					</div>
+					<div>
+						<label>Revenue（Optional）</label>
+						<input id="revenue" type="number" step="1" placeholder="optional" />
+					</div>
+				</div>
+			</div>
+
+			<!-- Scope 2 per doc -->
+			<div class="section">
+				<h2 style="margin:0 0 8px 0;">Scope 2（Purchased Electricity）</h2>
+
+				<div class="row">
+					<div>
+						<label>Total IT Load (MW)</label>
+						<input id="itMW" type="number" step="0.01" value="10" />
+					</div>
+					<div>
+						<label>PUE</label>
+						<input id="pue" type="number" step="0.01" value="1.5" />
+					</div>
+				</div>
+
+				<div class="row">
+					<div>
+						<label>Renewable Energy Coverage (%)</label>
+						<input id="renewPct" type="number" step="1" value="0" min="0" max="100" />
+					</div>
+					<div>
+						<label>Assumption</label>
+						<input type="text" value="IT full utilization (8760h/yr)" disabled />
+					</div>
+				</div>
+			</div>
+
+			<div class="btns">
+				<button class="primary" id="calcBtn">Calculate</button>
+				<button id="resetBtn">Reset</button>
+			</div>
+		</div>
+
+		<!-- RIGHT: RESULTS -->
+		<div class="right">
+			<div class="cards">
+				<div class="card">
+					<div class="kpi-title">Scope 1</div>
+					<div class="kpi-value" id="scope1">—</div>
+					<div class="kpi-sub">tCO₂e / year</div>
+					<div class="bar"><div class="fill" id="bar1"></div></div>
+				</div>
+				<div class="card">
+					<div class="kpi-title">Scope 2</div>
+					<div class="kpi-value" id="scope2">—</div>
+					<div class="kpi-sub">tCO₂e / year</div>
+					<div class="bar"><div class="fill" id="bar2"></div></div>
+				</div>
+				<div class="card">
+					<div class="kpi-title">Total</div>
+					<div class="kpi-value" id="total">—</div>
+					<div class="kpi-sub">tCO₂e / year</div>
+					<div class="mini">
+						<span class="pill" id="pueBadge">PUE: —</span>
+						<span class="pill" id="quadBadge">Quadrant: —</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel">
+				<h2>Intensity & Key Metrics</h2>
+				<div class="two">
+					<div class="card" style="border-radius:14px;">
+						<div class="kpi-title">Normalized Intensity</div>
+						<table>
+							<tr><td>Total tCO₂e / Facility MWh</td><td id="i_fac">—</td></tr>
+							<tr><td>Total tCO₂e / MW IT</td><td id="i_mwit">—</td></tr>
+							<tr><td>Total tCO₂e / Rack</td><td id="i_rack">—</td></tr>
+							<tr><td>Total tCO₂e / $ Revenue</td><td id="i_rev">—</td></tr>
+							<tr><td>Scope 2 intensity per IT MWh (kg CO₂/IT MWh)</td><td id="i_s2_it">—</td></tr>
+						</table>
+					</div>
+
+					<div class="card" style="border-radius:14px;">
+						<div class="kpi-title">Notes</div>
+						<div class="muted" style="font-size:12px;line-height:1.6">
+							<div>• Scope 2 = IT MW × 8760 × PUE × GridEF × (1 − Renew%)。</div>
+							<div>• Scope 1 = Diesel + Natural Gas + Refrigerant(Charge × Leak% × GWP)。</div>
+							<div>• Quadrant: High PUE / High GridEF → Dual risk；High PUE → Efficiency；High GridEF → Location。</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script>
+	// --- Emission factors per document ---
+	const EF_DIESEL_KG_PER_GAL = 10.21; // kg CO2 / gallon
+	const EF_NG_KG_PER_THERM  = 5.3;    // kg CO2 / therm
+	// Refrigerant GWP (simplified placeholders; doc references IPCC)
+	const GWP = { R410A: 2088, R134a: 1430, R407C: 1744, R32: 675, R22: 1810, R744: 1, R717: 0 };
+
+	// Quadrant thresholds (doc-inspired heuristic)
+	const PUE_HIGH = 1.5;
+	const GRID_EF_HIGH = 300; // kg/MWh
+
+	function fmt(x, digits=1){
+		if (!isFinite(x)) return "—";
+		return x.toLocaleString(undefined, {maximumFractionDigits: digits});
+	}
+
+	function toNum(id){
+		const v = document.getElementById(id).value;
+		const n = parseFloat(v);
+		return isFinite(n) ? n : 0;
+	}
+
+	function calc(){
+		// Inputs
+		const itMW = toNum("itMW");
+		const pue = toNum("pue");
+		const gridEF = toNum("gridEF"); // kg/MWh
+		const renewPct = Math.max(0, Math.min(100, toNum("renewPct"))) / 100;
+
+		// Scope 2 — per document formula (assume IT full utilization)
+		// Absolute Scope 2 = IT MW * 8760 * PUE * grid EF * (1 - % renewable)
+		const scope2_t =
+			itMW * 8760 * pue *
+			gridEF *
+			(1 - renewPct) / 1000; // kg -> t
+
+		// Scope 1
+		const dieselGal = toNum("dieselGal");
+		const gasTherms = toNum("gasTherms");
+		const refrigCharge = toNum("refrigCharge");       // kg
+		const leakRate = Math.max(0, Math.min(100, toNum("leakRate"))) / 100; // %
+		const refrigType = document.getElementById("refrigType").value;
+
+		const scope1_kg =
+			dieselGal * EF_DIESEL_KG_PER_GAL +
+			gasTherms * EF_NG_KG_PER_THERM +
+			refrigCharge * leakRate * (GWP[refrigType] || GWP.Other);
+
+		const scope1_t = scope1_kg / 1000;
+		const total_t = scope1_t + scope2_t;
+
+		// Energy (for facility MWh normalization; per doc assumptions)
+		const itMWh = itMW * 8760;
+		const facilityMWh = itMWh * pue;
+
+		// Normalized intensity (keep your optional fields)
+		const racksRaw = document.getElementById("racks").value.trim();
+		const revenueRaw = document.getElementById("revenue").value.trim();
+
+		const racks = racksRaw ? parseFloat(racksRaw) : NaN;
+		const revenue = revenueRaw ? parseFloat(revenueRaw) : NaN;
+
+		const i_fac = facilityMWh > 0 ? (total_t / facilityMWh) : NaN; // tCO2 / MWh facility
+		const i_mwit = itMW > 0 ? (total_t / itMW) : NaN;             // tCO2 / MW IT
+		const i_rack = (isFinite(racks) && racks > 0) ? (total_t / racks) : NaN;
+		const i_rev  = (isFinite(revenue) && revenue > 0) ? (total_t / revenue) : NaN;
+
+		// Document-required metric:
+		// Scope 2 carbon intensity per IT MWh = PUE * grid EF * (1 - % renewable)  [kg CO2 / IT MWh]
+		const s2_it_kg_per_itmwh = pue * gridEF * (1 - renewPct);
+
+		// Quadrant classification (doc concept)
+		let quadrant = "";
+		if (pue > PUE_HIGH && gridEF > GRID_EF_HIGH){
+			quadrant = "Dual Risk (High PUE + High Grid EF)";
+		} else if (pue > PUE_HIGH){
+			quadrant = "Operational Inefficiency Issue";
+		} else if (gridEF > GRID_EF_HIGH){
+			quadrant = "Location / Grid Issue";
+		} else {
+			quadrant = "Efficient Asset";
+		}
+
+		// Update KPI UI
+		document.getElementById("scope2").textContent = fmt(scope2_t, 0);
+		document.getElementById("scope1").textContent = fmt(scope1_t, 0);
+		document.getElementById("total").textContent  = fmt(total_t, 0);
+
+		document.getElementById("pueBadge").textContent = "PUE: " + fmt(pue, 2);
+		document.getElementById("quadBadge").textContent = "Quadrant: " + quadrant;
+
+		// Update intensity table
+		document.getElementById("i_fac").textContent  = isFinite(i_fac) ? fmt(i_fac, 4) : "—";
+		document.getElementById("i_mwit").textContent = isFinite(i_mwit) ? fmt(i_mwit, 2) : "—";
+		document.getElementById("i_rack").textContent = isFinite(i_rack) ? fmt(i_rack, 3) : "—";
+		document.getElementById("i_rev").textContent  = isFinite(i_rev)  ? fmt(i_rev, 8) : "—";
+		document.getElementById("i_s2_it").textContent = isFinite(s2_it_kg_per_itmwh) ? fmt(s2_it_kg_per_itmwh, 1) : "—";
+
+		// Bars: show relative share
+		const sum = scope1_t + scope2_t;
+		const p1 = sum > 0 ? (scope1_t / sum) * 100 : 0;
+		const p2 = sum > 0 ? (scope2_t / sum) * 100 : 0;
+		document.getElementById("bar1").style.width = Math.max(2, p1) + "%";
+		document.getElementById("bar2").style.width = Math.max(2, p2) + "%";
+	}
+
+	document.getElementById("calcBtn").addEventListener("click", calc);
+	document.getElementById("resetBtn").addEventListener("click", () => location.reload());
+
+	// auto-calc on load
+	calc();
+</script>
+</body>
 </html>
