@@ -487,6 +487,8 @@
 
 		const scope1_t = scope1_kg / 1000;
 		const total_t = scope1_t + scope2_t;
+		const scope2_kg = scope2_t * 1000
+		const total_kg = scope1_kg + scope2_kg
 
 		// Energy (for facility MWh normalization; per doc assumptions)
 		const itMWh = itMW * 8760;
@@ -497,9 +499,14 @@
 
 		const revenue = revenueRaw ? parseFloat(revenueRaw) : NaN;
 
+		/*
 		const i_fac = facilityMWh > 0 ? (total_t / facilityMWh) : NaN; // tCO2 / MWh facility
 		const i_mwit = itMW > 0 ? (total_t / itMW) : NaN; // tCO2 / MW IT
 		const i_rev  = (isFinite(revenue) && revenue > 0) ? (total_t / revenue) : NaN;
+		*/
+		const i_fac = facilityMWh > 0 ? total_kg / facilityMWh : NaN; // kg / Facility MWh
+		const i_mwit  = itMWh > 0 ? total_kg / itMWh : NaN; // kg / IT MWh
+		const i_rev = (isFinite(revenue) && revenue > 0) ? total_kg / revenue : NaN; // kg / $
 
 		// Document-required metric:
 		const s1_it_kg_per_itmwhy = itMWh > 0 ? scope1_kg / itMWh : 0;
