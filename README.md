@@ -356,7 +356,7 @@ Step 1: Clone the repository
 
 
 
-git clone https://github.com/your-repo/datacenter-carbon-calculator
+git clone https://github.com/tai0603/NoVa-Data-Center-Carbon-Calculator.git
 
 
 
