@@ -63,7 +63,7 @@
 		td:last-child{border-radius:0 10px 10px 0;text-align:right;font-weight:700}
 		.muted{color:var(--muted)}
 		.refrigTable input[type="number"] {
-			width: 120px;
+			width: 125px;
 		}
 	</style>
 </head>
@@ -94,18 +94,8 @@
 			<!-- Optional normalization fields -->
 			<div class="section">
 				<div class="row">
-					<!--
 					<div>
-						<label># Racks（Optional）</label>
-						<input id="racks" type="number" step="1" placeholder="optional" />
-					</div>
-					<div>
-						<label>Sqft（Optional）</label>
-						<input id="sqft" type="number" step="1" placeholder="optional" />
-					</div>
-					-->
-					<div>
-						<label>Revenue（Optional）</label>
+						<label>Revenue ($K) (Optional)</label>
 						<input id="revenue" type="number" step="1" placeholder="optional" />
 					</div>
 				</div>
@@ -222,18 +212,10 @@
 					<div class="kpi-title">Total</div>
 					<div class="kpi-value" id="total">—</div>
 					<div class="kpi-sub">tCO₂e / year</div>
-					<!--
-					<div class="mini">
-						<span class="pill" id="pueBadge">PUE: —</span>
-						<span class="pill" id="quadBadge">Quadrant: —</span>
-					</div>
-					-->
 				</div>
 			</div>
 
 			<div class="panel">
-				<h2>這邊標題想一下</h2>
-
 				<div class="two">
 					<!-- (1) Overall Scope 1 vs Scope 2 Pie -->
 					<div class="card">
@@ -285,11 +267,11 @@
 					<div class="card" style="border-radius:14px;">
 						<div class="kpi-title">Normalized Intensity</div>
 						<table>
-							<tr><td>Total tCO₂e / Facility MWh</td><td id="i_fac">—</td></tr>
-							<tr><td>Total tCO₂e / MW IT</td><td id="i_mwit">—</td></tr>
-							<!-- <tr><td>Total tCO₂e / Rack</td><td id="i_rack">—</td></tr> -->
-							<tr><td>Total tCO₂e / $ Revenue</td><td id="i_rev">—</td></tr>
-							<tr><td>Scope 2 intensity per IT MWh (kg CO₂/IT MWh)</td><td id="i_s2_it">—</td></tr>
+							<tr><td>Total Operating kgCO₂e / IT MWh</td><td id="i_mwit">—</td></tr>
+							<tr><td>Total Operating kgCO₂e / Facility MWh</td><td id="i_fac">—</td></tr>
+							<tr><td>Total Operating kgCO₂e / $ K Revenue</td><td id="i_rev">—</td></tr>
+							<tr><td>Scope 1 intensity kgCO₂e / IT MWh</td><td id="i_s1_it">—</td></tr>
+							<tr><td>Scope 2 intensity kgCO₂e / IT MWh</td><td id="i_s2_it">—</td></tr>
 						</table>
 					</div>
 				</div>
@@ -306,7 +288,7 @@
 						<div id="s1RefSeg" style="width:0%; background:var(--good);"></div>
 					</div>
 				</div>
-				<div style="display:flex; gap:20px; margin-top:10px; font-size:13px; justify-content:center;">
+				<div style="display:flex; gap:20px; margin-top:10px; font-size:13px; justify-content:center; font-weight:400;">
 					<div style="display:flex; align-items:center; gap:6px;">
 						<div style="width:12px; height:12px; background:var(--accent);"></div>
 						<span id="legendDiesel">Diesel —</span>
@@ -410,26 +392,42 @@
 			</div>
 
 			<div class="panel">
-				<h2>Notes</h2>
-				<div class="card" style="border-radius:14px;">
+				<!-- <h2>Calculator Notes</h2> -->
+				<!-- <div class="card" style="border-radius:14px;"> -->
 					<div class="muted" style="font-size:12px;line-height:1.6">
+						<h2>Calculator Notes</h2>
+							<ul>
+								<li>Boundary: Operational control of single data center asset (Scope 1 and 2 only; Scope 3 excluded) </li>
+								<li>No carbon offsets applied</li>
+							</ul>
 						<strong>Scope 1</strong>
 							<ul>
 								<li>Total Scope 1 = Diesel + Natural Gas + Refrigerant Leakage</li>
-								<li>Diesel Emissions (kg CO₂) = Diesel (gallons) × 10.21</li>
-								<li>Natural Gas Emissions (kg CO₂) = Natural Gas (therms) × 5.3</li>
+								<li>Diesel Emissions (kg CO₂e) = Diesel (gallons) × 10.21</li>
+								<li>Natural Gas Emissions (kg CO₂e) = Natural Gas (therms) × 5.3</li>
 								<li>Refrigerant Emissions (kg CO₂e) = Refrigerant Charge (kg) × Leakage Rate (%) × GWP</li>
-								<li>All Scope 1 results converted from kg to tCO₂e (÷ 1000)</li>
+								<li>Refrigerant GWPs based on IPCC AR5 100-year values</li>
+								<li>Due to significant variability across facilities and minor contribution to emissions, on-site fuel use for vehicles is excluded in Scope 1 calculation</li>
+								<li>Assume diesel consumption reflects both emergency and testing operations</li>
+								<li>Assume no seasonality impact on emissions</li>
 							</ul>
 
 						<strong>Scope 2</strong>
 							<ul>
-								<li>Absolute Scope 2 (tCO₂e) = IT MW × 8760 × PUE × Grid EF × (1 − Renewable%) ÷ 1000</li>
+								<li>Total Scope 2  = IT MW × 8760 × PUE × Grid EF × (1 − Renewable%) ÷ 1000</li>
 								<li>8760 = hours per year</li>
-								<li>Renewables assumed zero Scope 2 emissions</li>
+								<li>Assume constant annual average PUE</li>
+								<li>Assume installed IT capacity operates at full load for the full year</li>
+								<li>Assume steady full-year operation</li>
+								<li>Scope 2 calculated using location-based grid emission factors from EPA eGRID</li>
+								<li>Assume renewable energy sources have zero Scope 2 emissions</li>
+								<li>Assume no battery storage used onsite for peak shaving or carbon shifting</li>
+								<li>Assume no seasonality impact on emissions</li>
+								<li>A PUE of 1.35 reflects the current industry benchmark for modern, well-operated hyperscale and institutional-grade colocation data centers; legacy enterprise facilities typically operate in the 1.6–2.0+ range, while best-in-class hyperscale campuses can achieve 1.1–1.2</li>
+								<li>Based on 2023 U.S. Energy Information Administration (EIA) data, the average grid emission factor for the United States is approximately 0.367 kg CO₂e/MWh</li>
 							</ul>
 					</div>
-				</div>
+				<!-- </div> -->
 			</div>
 
 		</div>
@@ -466,7 +464,6 @@
 		const renewPct = Math.max(0, Math.min(100, toNum("renewPct"))) / 100;
 
 		// Scope 2 — per document formula (assume IT full utilization)
-		// Absolute Scope 2 = IT MW * 8760 * PUE * grid EF * (1 - % renewable)
 		const scope2_t = itMW * 8760 * pue * gridEF * (1 - renewPct) / 1000; // kg -> t
 
 		// Scope 1
@@ -496,43 +493,27 @@
 		const facilityMWh = itMWh * pue;
 
 		// Normalized intensity (keep your optional fields)
-		// const racksRaw = document.getElementById("racks").value.trim();
 		const revenueRaw = document.getElementById("revenue").value.trim();
 
-		// const racks = racksRaw ? parseFloat(racksRaw) : NaN;
 		const revenue = revenueRaw ? parseFloat(revenueRaw) : NaN;
 
 		const i_fac = facilityMWh > 0 ? (total_t / facilityMWh) : NaN; // tCO2 / MWh facility
 		const i_mwit = itMW > 0 ? (total_t / itMW) : NaN; // tCO2 / MW IT
-		// const i_rack = (isFinite(racks) && racks > 0) ? (total_t / racks) : NaN;
 		const i_rev  = (isFinite(revenue) && revenue > 0) ? (total_t / revenue) : NaN;
 
 		// Document-required metric:
-		// Scope 2 carbon intensity per IT MWh = PUE * grid EF * (1 - % renewable)  [kg CO2 / IT MWh]
+		const s1_it_kg_per_itmwhy = itMWh > 0 ? scope1_kg / itMWh : 0;
 		const s2_it_kg_per_itmwh = pue * gridEF * (1 - renewPct);
 
-		/*
-		// Quadrant classification
-		let quadrant = "";
-		if (pue > PUE_HIGH && gridEF > GRID_EF_HIGH){
-			quadrant = "Dual Risk (High PUE + High Grid EF)";
-		} else if (pue > PUE_HIGH){
-			quadrant = "Operational Inefficiency Issue";
-		} else if (gridEF > GRID_EF_HIGH){
-			quadrant = "Location / Grid Issue";
-		} else {
-			quadrant = "Efficient Asset";
-		}
-		*/
 		let quadrant = "";
 		if (pue > PUE_HIGH && gridEF > GRID_EF_HIGH){
 			quadrant = "Dual Risk: High Operational + High Location Risk";
 		} else if (pue > PUE_HIGH){
-			quadrant = "Efficiency Risk: Operational inefficiency dominant";
+			quadrant = "Efficiency Risk: Operational Inefficiency Dominant";
 		} else if (gridEF > GRID_EF_HIGH){
-			quadrant = "Location Risk: Carbon-intensive grid exposure";
+			quadrant = "Location Risk: Carbon-Intensive Grid Exposure";
 		} else {
-			quadrant = "Efficient Asset: Low carbon risk profile";
+			quadrant = "Efficient Asset: Low Carbon Risk Profile";
 		}
 
 		// Update KPI UI
@@ -540,16 +521,14 @@
 		document.getElementById("scope1").textContent = fmt(scope1_t, 0);
 		document.getElementById("total").textContent  = fmt(total_t, 0);
 
-		// document.getElementById("pueBadge").textContent = "PUE: " + fmt(pue, 2);
-		// document.getElementById("quadBadge").textContent = "Quadrant: " + quadrant;
 		document.getElementById("quadResult").textContent = quadrant;
 
 		// Update intensity table
-		document.getElementById("i_fac").textContent  = isFinite(i_fac) ? fmt(i_fac, 4) : "—";
+		document.getElementById("i_fac").textContent  = isFinite(i_fac) ? fmt(i_fac, 2) : "—";
 		document.getElementById("i_mwit").textContent = isFinite(i_mwit) ? fmt(i_mwit, 2) : "—";
-		// document.getElementById("i_rack").textContent = isFinite(i_rack) ? fmt(i_rack, 3) : "—";
-		document.getElementById("i_rev").textContent  = isFinite(i_rev)  ? fmt(i_rev, 8) : "—";
-		document.getElementById("i_s2_it").textContent = isFinite(s2_it_kg_per_itmwh) ? fmt(s2_it_kg_per_itmwh, 1) : "—";
+		document.getElementById("i_rev").textContent  = isFinite(i_rev)  ? fmt(i_rev, 2) : "—";
+		document.getElementById("i_s1_it").textContent = itMWh > 0 ? s1_it_kg_per_itmwhy.toFixed(2) : "—";
+		document.getElementById("i_s2_it").textContent = isFinite(s2_it_kg_per_itmwh) ? fmt(s2_it_kg_per_itmwh, 2) : "—";
 
 		// Bars: show relative share
 		const sum = scope1_t + scope2_t;
